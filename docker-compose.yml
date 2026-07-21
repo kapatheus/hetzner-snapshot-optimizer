@@ -11,6 +11,7 @@ services:
       - TZ=${CRON_TIMEZONE:-Europe/Helsinki}
       - DEFAULT_ROTATION=${DEFAULT_ROTATION:-7}
       - DEFAULT_INTERVAL_DAYS=${DEFAULT_INTERVAL_DAYS:-1}
+      - NOTIFY_ON_SNAPSHOT=${NOTIFY_ON_SNAPSHOT:-false}
       - DATA_DIR=/data
     volumes:
       - ./data:/data
