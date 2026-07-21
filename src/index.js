@@ -21,6 +21,12 @@ import { notify, log } from "./notifier.js";
 const TOKEN = process.env.HETZNER_API_TOKEN;
 const CRON_SCHEDULE = process.env.CRON_SCHEDULE || "0 3 * * *";
 const CRON_TIMEZONE = process.env.CRON_TIMEZONE || process.env.TZ || "Europe/Helsinki";
+// Whether to send a Discord notification every time a snapshot is taken (just the
+// size, no cost breakdown - see the backup-switch notification for that). Always
+// logged to console either way - this only controls the Discord message. Defaults
+// to false since this is routine and can happen daily per server; set to "true" if
+// you want a Discord ping for every snapshot too.
+const NOTIFY_ON_SNAPSHOT = (process.env.NOTIFY_ON_SNAPSHOT ?? "false").toLowerCase() === "true";
 
 if (!TOKEN) {
   console.error("HETZNER_API_TOKEN is missing from environment variables.");
@@ -44,6 +50,8 @@ async function runOnce() {
   const backupPercentage = getBackupPercentage(pricing);
   const currency = getCurrency(pricing);
 
+  const summary = { snapshotsTaken: 0, backupsEnabled: 0, errors: 0 };
+
   for (const server of servers) {
     try {
       await processServer({
@@ -53,8 +61,10 @@ async function runOnce() {
         backupPercentage,
         currency,
         state,
+        summary,
       });
     } catch (err) {
+      summary.errors++;
       await notify(
         `⚠️ Error processing server **${server.name}**: ${err.message}`,
         { isError: true }
@@ -63,6 +73,10 @@ async function runOnce() {
   }
 
   await saveState(state);
+  await notify(
+    `✅ Run finished: ${summary.snapshotsTaken} snapshot(s) taken, ` +
+      `${summary.backupsEnabled} backup(s) enabled, ${summary.errors} error(s).`
+  );
   log("Run finished.");
 }
 
@@ -73,6 +87,7 @@ async function processServer({
   backupPercentage,
   currency,
   state,
+  summary,
 }) {
   if (isExcluded(server)) {
     log(`${server.name}: skipped (snapshot-bot.enabled=false)`);
@@ -134,12 +149,17 @@ async function processServer({
     rotation,
   });
 
-  const summary =
+  const costSummary =
     `**${server.name}** - snapshot ${sizeGb.toFixed(2)}GB, rotation ${rotation}\n` +
     `Snapshot cost (${rotation}x): ${formatMoney(costs.totalSnapshotCost, currency)}/mo | ` +
     `Backup: ${formatMoney(costs.backupCost, currency)}/mo (${backupPercentage}%)`;
 
-  log(summary);
+  log(costSummary);
+  summary.snapshotsTaken++;
+
+  if (NOTIFY_ON_SNAPSHOT) {
+    await notify(`📸 **${server.name}**: snapshot taken (${sizeGb.toFixed(2)}GB, rotation ${rotation}).`);
+  }
 
   if (costs.backupIsCheaper) {
     await notify(
@@ -163,6 +183,7 @@ async function processServer({
     serverState.snapshots = [];
 
     await notify(`✅ **${server.name}**: Backup is now enabled.`);
+    summary.backupsEnabled++;
   }
 }
 
