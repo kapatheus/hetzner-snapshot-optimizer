@@ -50,10 +50,14 @@ export async function getPricing(token) {
 
 /**
  * Returns the server's monthly price (net, VAT excluded) for its server_type + location.
+ *
+ * Note: Hetzner removed the `datacenter` property from the Servers API response
+ * after 1 July 2026 (announced 2025-12-16). Location is now available directly
+ * as `server.location`, not `server.datacenter.location`.
  */
 export function getServerMonthlyPriceNet(pricing, server) {
   const serverTypeName = server.server_type.name;
-  const locationName = server.datacenter.location.name;
+  const locationName = server.location.name;
 
   const typePricing = pricing.server_types.find((t) => t.name === serverTypeName);
   if (!typePricing) {
