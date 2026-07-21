@@ -21,6 +21,48 @@ shown in) follow your Hetzner project owner's account settings - the bot reads t
 currency from the API response rather than assuming EUR, so it also works correctly
 on USD-billed accounts.
 
+## Notifications
+
+The bot sends the following to Discord (if `DISCORD_WEBHOOK_URL` is set) and always
+logs everything to console regardless:
+
+- **On startup**: `🤖 Hetzner Snapshot Optimizer started.`
+- **Every time a snapshot is taken** (toggle with `NOTIFY_ON_SNAPSHOT`, default
+  `false`): just the size, kept short since this is routine and can happen daily
+  per server. The cost comparison is only shown when it's actually worth seeing -
+  see the next point:
+  ```
+  📸 **my-server**: snapshot taken (3.09GB, rotation 7).
+  ```
+- **When Backup becomes cheaper than snapshots** (always sent, not affected by
+  `NOTIFY_ON_SNAPSHOT` - this is an action-triggering event, not routine):
+  ```
+  🔄 **my-server**: Backup is now cheaper than 7x snapshots
+  (1.098 EUR/mo vs 1.250 EUR/mo, average size 12.50GB, break-even 11.00GB).
+  Enabling Backup automatically and stopping snapshots for this server.
+  ```
+  followed by a confirmation once it's done:
+  ```
+  ✅ **my-server**: Backup is now enabled.
+  ```
+- **On errors processing an individual server** (e.g. unknown server_type,
+  API failure) - the run continues with the next server:
+  ```
+  ⚠️ Error processing server **my-server**: [error message]
+  ```
+- **At the end of every run**, a summary regardless of `NOTIFY_ON_SNAPSHOT`:
+  ```
+  ✅ Run finished: 3 snapshot(s) taken, 1 backup(s) enabled, 0 error(s).
+  ```
+
+Routine cases that do **not** notify Discord (logged only): a server already having
+Backup enabled, a server skipped because it's not due yet, or a server excluded via
+`snapshot-bot.enabled=false`. This keeps the channel focused on things worth seeing.
+
+By default (`NOTIFY_ON_SNAPSHOT=false`) you only get pinged for things worth acting
+on: backup switches, errors, and the per-run summary. Set `NOTIFY_ON_SNAPSHOT=true`
+if you'd also like a short Discord message for every routine snapshot.
+
 ## Setup
 
 1. Copy `.env.example` to `.env` and fill in:
