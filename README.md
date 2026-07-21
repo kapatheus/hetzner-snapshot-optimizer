@@ -47,6 +47,7 @@ on USD-billed accounts.
    | `snapshot-bot.rotation` | how many snapshots to keep | `7` |
    | `snapshot-bot.interval-days` | days between snapshots (decimals allowed) | `1`, `2`, `7` |
    | `snapshot-bot.enabled` | `false` = bot ignores this server entirely | `false` |
+   | `snapshot-bot.price-override` | manual monthly price for legacy server types no longer listed in `/pricing` (see below) | `5.49` |
 
    The label box works as a key/value pair editor: type the key, then press Enter or
    type `=` to switch to the value part, then Enter again to confirm. You can also
@@ -93,6 +94,16 @@ on USD-billed accounts.
   (e.g. a game server with players online).
 - Prices and currency come directly from the Hetzner API and reflect your account's
   billing currency and VAT rate - no assumptions are hardcoded.
+- **Legacy / discontinued server types**: Hetzner's `/pricing` endpoint only lists
+  server types currently on sale. If you have older servers on grandfathered plans
+  (e.g. an old `cx21` no longer offered to new customers), the bot can't look up
+  their price automatically and will log an error for them instead of silently
+  guessing. Use `snapshot-bot.price-override` to give the bot that server's actual
+  monthly price by hand. **Important:** enter the NET price (VAT excluded), matching
+  what `/pricing` returns for every other server - not the VAT-inclusive price you
+  might see as a consumer in the Hetzner Console. If your account is VAT-registered
+  (net prices shown by default), you can usually copy the price straight from the
+  console; otherwise divide the displayed price by `(1 + VAT rate / 100)`.
 
 ## Development / manual run
 
