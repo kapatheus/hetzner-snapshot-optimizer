@@ -14,6 +14,21 @@ export function isExcluded(server) {
 }
 
 /**
+ * Resolves a manual monthly price override, in the same currency as Hetzner's
+ * /pricing response, for servers whose server_type is no longer listed there
+ * (e.g. legacy/discontinued plans still billed at a grandfathered price).
+ * Label: snapshot-bot.price-override (must be the NET price, VAT excluded,
+ * matching what /pricing returns for other servers).
+ * Returns null if not set or not a valid number.
+ */
+export function resolvePriceOverride(server) {
+  const label = getLabel(server, "snapshot-bot.price-override");
+  if (!label) return null;
+  const value = parseFloat(label);
+  return isNaN(value) ? null : value;
+}
+
+/**
  * Resolves a server's settings purely from Hetzner labels:
  * - snapshot-bot.rotation        (how many snapshots to keep)
  * - snapshot-bot.interval-days   (how many days between snapshots)
