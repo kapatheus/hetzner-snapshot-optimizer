@@ -1,0 +1,16 @@
+services:
+  hetzner-snapshot-optimizer:
+    build: .
+    container_name: hetzner-snapshot-optimizer
+    restart: unless-stopped
+    environment:
+      - HETZNER_API_TOKEN=${HETZNER_API_TOKEN}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - CRON_SCHEDULE=${CRON_SCHEDULE:-0 3 * * *}
+      - CRON_TIMEZONE=${CRON_TIMEZONE:-Europe/Helsinki}
+      - TZ=${CRON_TIMEZONE:-Europe/Helsinki}
+      - DEFAULT_ROTATION=${DEFAULT_ROTATION:-7}
+      - DEFAULT_INTERVAL_DAYS=${DEFAULT_INTERVAL_DAYS:-1}
+      - DATA_DIR=/data
+    volumes:
+      - ./data:/data

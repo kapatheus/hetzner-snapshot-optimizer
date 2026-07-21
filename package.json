@@ -1,0 +1,18 @@
+{
+  "name": "hetzner-snapshot-optimizer",
+  "version": "1.0.0",
+  "description": "Takes Hetzner Cloud snapshots on a schedule, compares cost against the Backup feature, and automatically enables Backup when it becomes cheaper.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "run-once": "node src/index.js --once"
+  },
+  "dependencies": {
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
