@@ -13,7 +13,7 @@ import {
   enableBackup,
   isBackupEnabled,
 } from "./hetznerApi.js";
-import { isExcluded, resolveServerSettings } from "./config.js";
+import { isExcluded, resolveServerSettings, resolvePriceOverride } from "./config.js";
 import { loadState, saveState, getServerState, isSnapshotDue } from "./state.js";
 import { calculateCosts } from "./costCalculator.js";
 import { notify, log } from "./notifier.js";
@@ -85,7 +85,14 @@ async function processServer({
   }
 
   const { rotation, intervalDays } = resolveServerSettings(server);
-  const serverMonthlyPriceNet = getServerMonthlyPriceNet(pricing, server);
+  const priceOverride = resolvePriceOverride(server);
+  const serverMonthlyPriceNet =
+    priceOverride !== null ? priceOverride : getServerMonthlyPriceNet(pricing, server);
+
+  if (priceOverride !== null) {
+    log(`${server.name}: using manual price override (${priceOverride} ${currency}/mo, server_type not in current /pricing)`);
+  }
+
   const serverState = getServerState(state, server.id);
 
   if (!isSnapshotDue(serverState, intervalDays)) {
